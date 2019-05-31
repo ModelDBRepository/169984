@@ -1,0 +1,14 @@
+% writeInput('/home/nobackup/genesis.DATA/INDATA/test-%d', myData)
+
+function writeInput(file, inputData)
+
+[r,c] = size(inputData)
+fprintf('%s\n',path)
+for i=1:c
+    data = inputData(:,i);
+    spikes = data(find(data < inf));
+    filename = strcat(file,num2str(i),'.txt');
+    fid = fopen([path filename], 'w');
+    fprintf(fid, '%f\n',spikes);
+    fclose(fid);
+end

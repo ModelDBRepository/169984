@@ -1,0 +1,12 @@
+/MScell
+MScellSyn.g
+MScell.g
+globals.g
+parametersA.g
+include_channels
+
+/MScell/Channels
+nmda_channel.g
+ca1.3
+naf
+

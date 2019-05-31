@@ -1,0 +1,103 @@
+%Notes for Dr. Blackwell from Sriram:
+%1. What this file does:
+% This file makes the input trains that would serve as the cortical and fs input
+% for the SPcells. The duplicate and unique input signals are now combined in
+% the genesis file SimFile.g. This file also has a variable which contains 
+% unique random numbers, the function of which is described in the SimFile.g
+% file. The noise and inout signals will be combined in this file for the 
+% next round once the details of the input connection is finalized. 
+
+function m = Inputwithcorrelation(corr_syn_Glu, corr_syn_GABA, upFreq, ...
+                                              noiseFreq, maxTime, ...
+				              pMix, randSeed, ...
+                                              numCells)
+
+                                  
+rand('seed', randSeed);
+randSeed = rand('seed');
+downFreq = 1e-9;
+
+disp(['Setting random seed to ' num2str(randSeed)])
+disp(['All upstate input, freq ' num2str(upFreq)])
+
+path = [pwd '\INPUTDATA\'];
+fprintf('%s\n',path);
+
+
+nAMPA = 72;
+nGABA = 117;
+
+dup_number = randperm(ceil(numCells/2)); % decides the number of cells that will have duplicate spikes within each cell
+dup_syn_decider = rand(1,dup_number(1)); % decides the percentage of duplication within the cells that will have duplicates
+
+num_selected_dup = 1;
+
+for nCtr = 1:numCells
+             yes_unique=1;
+	     if num_selected_dup<=dup_number(1)  
+	           dup_yes_no = rand(1)<rand(1);
+	           if dup_yes_no==1
+		     AMPAInsignal{nCtr} = makeTrainInput(corr_syn_Glu, dup_syn_decider(num_selected_dup), nAMPA, ...
+                                   upFreq, maxTime);
+                       num_selected_dup = num_selected_dup + 1;
+                       yes_unique = 0;
+		   else
+                       yes_unique = 1;
+                   end
+	     end
+	     
+             if yes_unique==1
+		     AMPAInsignal{nCtr} =  makeDaughterInput(corr_syn_Glu, nAMPA, ...
+                                                 upFreq, maxTime); 
+             end
+end
+
+dup_number = randperm(ceil(numCells/2));% decides the number of cells that will have duplicate spikes within each cell
+dup_syn_decider = rand(1,dup_number(1)); % decides the percentage of duplication within the cells that will have duplicates
+
+num_selected_dup = 1;
+
+for nCtr = 1:numCells
+             yes_unique=1;
+	     if num_selected_dup<=dup_number(1)
+	           dup_yes_no = rand(1)<rand(1);
+	           if dup_yes_no==1
+		     GABAInsignal{nCtr} = makeTrainInput(corr_syn_GABA, dup_syn_decider(num_selected_dup), nGABA, ...
+                                   upFreq, maxTime);
+                       num_selected_dup = num_selected_dup + 1;
+                       yes_unique = 0;
+		   else
+                       yes_unique = 1;
+                   end
+	     end
+	     
+             if yes_unique==1
+		     GABAInsignal{nCtr} =  makeDaughterInput(corr_syn_GABA, nGABA, ...
+                                                 upFreq, maxTime);
+             end
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+for nCtr = 1:numCells
+         temp_AMPA = ['AMPAinsignal_' num2str(nCtr) '_'];
+         temp_GABA = ['GABAinsignal_' num2str(nCtr) '_'];
+	     writeInput(temp_AMPA, AMPAInsignal{nCtr});
+         writeInput(temp_GABA, GABAInsignal{nCtr});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+fid = fopen([path 'inputInfo.txt'], 'w');
+
+fprintf(fid, '%s\n', 'Inputwithcorrelation');
+fprintf(fid, '%f\n', corr_syn_Glu);
+fprintf(fid, '%f\n', corr_syn_GABA);
+fprintf(fid, '%f\n', upFreq);
+fprintf(fid, '%f\n', noiseFreq);
+fprintf(fid, '%f\n', maxTime);
+fprintf(fid, '%d\n', randSeed);
+fprintf(fid, '%d\n', numCells);
+
+fclose(fid);
